@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Calculadora de encargo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #eef2ee;
+        --surface: #ffffff;
+        --surface-2: #f4f7f4;
+        --ink: #1b2420;
+        --ink-soft: #5a6a61;
+        --line: #d8e0d9;
+        --green: #14684a;
+        --green-dark: #0d4c35;
+        --green-soft: #e2f0e8;
+        --amber: #d98a1f;
+        --amber-soft: #fdf0da;
+        --red: #b3372a;
+        --red-soft: #fbe7e3;
+        --shadow: 0 1px 2px rgba(20, 40, 30, .06), 0 8px 24px rgba(20, 40, 30, .07);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111614;
+          --surface: #1b211e;
+          --surface-2: #232a26;
+          --ink: #edf3ee;
+          --ink-soft: #9db0a4;
+          --line: #323c36;
+          --green: #3ec98a;
+          --green-dark: #7fe0b2;
+          --green-soft: #173327;
+          --amber: #f0ab45;
+          --amber-soft: #3a2c12;
+          --red: #ef7d6e;
+          --red-soft: #3d1f1a;
+          --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        line-height: 1.45;
+      }
+      .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 64px; }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+      /* ---------- Encabezado ---------- */
+      header { margin-bottom: 18px; }
+      h1 { font-size: clamp(1.7rem, 5.5vw, 2.4rem); line-height: 1.08; margin: 0 0 8px; font-weight: 800; letter-spacing: -.01em; }
+      h1 .accent { color: var(--green); }
+      .lede { margin: 0; color: var(--ink-soft); font-size: 1rem; max-width: 56ch; }
+      .flow {
+        display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+        margin-top: 14px; font-size: .82rem; font-weight: 600; color: var(--ink-soft);
+      }
+      .flow .step { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; min-height: 32px; display: inline-flex; align-items: center; }
+      .flow .arrow { color: var(--amber); font-weight: 700; }
+
+      /* ---------- Tarjetas / secciones ---------- */
+      section.card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+        box-shadow: var(--shadow); padding: 18px; margin-bottom: 16px;
+      }
+      .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+      h2 { font-size: 1.12rem; margin: 0; font-weight: 700; }
+      .card-sub { color: var(--ink-soft); font-size: .9rem; margin: 2px 0 14px; }
+      .step-num {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; border-radius: 8px; background: var(--green); color: #fff;
+        font-size: .85rem; font-weight: 700; margin-right: 8px; vertical-align: -6px; flex: none;
+      }
+      @media (prefers-color-scheme: dark) { .step-num { color: #0c2318; } }
+
+      /* ---------- Productos ---------- */
+      .prod-head, .prod-row {
+        display: grid; gap: 8px;
+        grid-template-columns: 1fr 62px 104px 118px 40px;
+        align-items: end;
+      }
+      .prod-head { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); padding: 0 2px 6px; }
+      .prod-row { padding: 10px 0; border-top: 1px dashed var(--line); }
+      .prod-row:first-of-type { border-top: none; }
+      label.f { display: block; }
+      label.f span { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); margin-bottom: 4px; }
+      .prod-head + .prod-row label.f span, .prod-row label.f span.mobile-only { display: none; }
+      input[type="text"], input[type="number"] {
+        width: 100%; min-height: 44px; padding: 9px 10px;
+        border: 1.5px solid var(--line); border-radius: 9px;
+        background: var(--surface-2); color: var(--ink);
+        font: inherit; font-size: 1rem;
+      }
+      input:focus { outline: 2px solid var(--green); outline-offset: 1px; border-color: var(--green); }
+      input[type="number"] { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+      .btn-remove {
+        width: 40px; height: 44px; border-radius: 9px; border: 1.5px solid var(--line);
+        background: transparent; color: var(--ink-soft); font-size: 1.15rem; cursor: pointer; line-height: 1;
+      }
+      .btn-remove:hover { color: var(--red); border-color: var(--red); }
+      .prod-total { font-size: .85rem; color: var(--ink-soft); margin-top: 2px; grid-column: 1 / -1; }
+      .prod-total b { color: var(--ink); }
+
+      .btn-add {
+        margin-top: 12px; min-height: 44px; padding: 10px 16px; width: 100%;
+        border: 1.5px dashed var(--green); border-radius: 10px; background: var(--green-soft);
+        color: var(--green-dark); font: inherit; font-weight: 700; cursor: pointer;
+      }
+      .btn-add:hover { filter: brightness(.97); }
+
+      /* ---------- Gastos ---------- */
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+      .hint { font-size: .82rem; color: var(--ink-soft); margin-top: 6px; }
+      .field-note { font-size: .8rem; color: var(--ink-soft); margin-top: 5px; }
+
+      /* ---------- Resultado ---------- */
+      .verdict {
+        border-radius: 14px; padding: 20px 18px; margin-bottom: 16px; border: 1.5px solid var(--line);
+        background: var(--surface); box-shadow: var(--shadow);
+      }
+      .verdict .v-label { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-soft); margin: 0 0 4px; }
+      .verdict .v-big { font-size: clamp(1.9rem, 7vw, 2.8rem); font-weight: 800; line-height: 1.05; margin: 0; }
+      .verdict .v-sub { margin: 8px 0 0; color: var(--ink-soft); font-size: .95rem; }
+      .verdict.good { background: var(--green-soft); border-color: var(--green); }
+      .verdict.good .v-big { color: var(--green-dark); }
+      .verdict.bad { background: var(--red-soft); border-color: var(--red); }
+      .verdict.bad .v-big { color: var(--red); }
+      .verdict.idle .v-big { color: var(--ink-soft); }
+
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+      .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
+      .stat .s-label { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin: 0 0 6px; }
+      .stat .s-value { font-size: 1.28rem; font-weight: 700; margin: 0; }
+      .stat .s-alt { font-size: .85rem; color: var(--ink-soft); margin: 2px 0 0; }
+
+      .bar-row { margin: 10px 0; }
+      .bar-row .b-top { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; margin-bottom: 5px; }
+      .bar-row .b-top .b-name { color: var(--ink-soft); }
+      .bar-track { height: 12px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+      .bar-fill { height: 100%; width: 0%; transition: width .35s ease; }
+      .fill-merc { background: var(--green); }
+      .fill-env { background: var(--amber); }
+      .fill-men { background: #4f7fa8; }
+      .fill-otr { background: #9a8f7d; }
+
+      table.break { width: 100%; border-collapse: collapse; font-size: .92rem; }
+      table.break th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); padding: 8px 6px; border-bottom: 2px solid var(--line); }
+      table.break td { padding: 10px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      table.break td.num, table.break th.num { text-align: right; }
+      table.break tr:last-child td { border-bottom: none; }
+      .pos { color: var(--green-dark); font-weight: 700; }
+      .neg { color: var(--red); font-weight: 700; }
+
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+      .btn {
+        min-height: 48px; padding: 12px 20px; border-radius: 11px; border: none;
+        font: inherit; font-weight: 700; cursor: pointer; flex: 1 1 180px;
+      }
+      .btn-primary { background: var(--green); color: #fff; }
+      @media (prefers-color-scheme: dark) { .btn-primary { color: #0c2318; } }
+      .btn-ghost { background: transparent; border: 1.5px solid var(--line); color: var(--ink-soft); flex: 0 1 auto; }
+      .copy-msg { font-size: .88rem; color: var(--green-dark); margin: 10px 0 0; min-height: 1.2em; font-weight: 600; }
+      #resumenBox { display: none; margin-top: 12px; }
+      #resumenBox textarea {
+        width: 100%; min-height: 170px; padding: 12px; border-radius: 10px;
+        border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink);
+        font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem;
+      }
+
+      footer { color: var(--ink-soft); font-size: .82rem; margin-top: 8px; }
+      footer p { margin: 4px 0; }
+
+      @media (max-width: 640px) {
+        .stats { grid-template-columns: 1fr; }
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        .prod-head { display: none; }
+        .prod-row { grid-template-columns: 1fr 1fr 40px; align-items: end; padding: 14px 0; }
+        .prod-row .f-name { grid-column: 1 / -1; }
+        .prod-row .f-venta { grid-column: 1 / 3; }
+        .prod-row .btn-remove { grid-column: 3; grid-row: 2 / 4; height: auto; align-self: stretch; }
+        .prod-row label.f span.mobile-only { display: block; }
+        table.break thead { display: none; }
+        table.break, table.break tbody, table.break tr, table.break td { display: block; width: 100%; }
+        table.break tr { padding: 10px 0; border-bottom: 1px solid var(--line); }
+        table.break td { border: none; padding: 2px 0; text-align: left !important; display: flex; justify-content: space-between; gap: 14px; }
+        table.break td::before { content: attr(data-th); font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); padding-top: 3px; }
+        table.break td.td-name { font-weight: 700; font-size: 1rem; }
+        table.break td.td-name::before { content: ""; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .bar-fill { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Calculadora de <span class="accent">encargo</span></h1>
+        <p class="lede">Encargas desde Cuba, tu mensajera compra allá, la agencia te lo envía y tú revendes aquí. Mete los números y mira el <strong>costo total</strong> y <strong>cuánto te queda de ganancia</strong>.</p>
+        <div class="flow" aria-hidden="true">
+          <span class="step">Tú encargas</span><span class="arrow">→</span>
+          <span class="step">Ella compra y empaca</span><span class="arrow">→</span>
+          <span class="step">La agencia envía</span><span class="arrow">→</span>
+          <span class="step">Tú revendes</span>
+        </div>
+      </header>
+
+      <!-- 1 · Productos -->
+      <section class="card" aria-labelledby="h-prod">
+        <div class="card-head"><h2 id="h-prod"><span class="step-num">1</span>Lo que encargas</h2></div>
+        <p class="card-sub">Cada producto con su precio de compra allá y a cuánto piensas venderlo aquí.</p>
+
+        <div class="prod-head" aria-hidden="true">
+          <span>Producto</span><span>Cant.</span><span>Costo c/u (USD)</span><span id="head-venta">Venta c/u (USD)</span><span></span>
+        </div>
+        <div id="prodList"></div>
+
+        <button class="btn-add" id="btnAdd" type="button">+ Agregar otro producto</button>
+      </section>
+
+      <!-- 2 · Gastos -->
+      <section class="card" aria-labelledby="h-gastos">
+        <div class="card-head"><h2 id="h-gastos"><span class="step-num">2</span>Gastos del encargo</h2></div>
+        <p class="card-sub">Además de la mercancía, esto también sale de tu bolsillo.</p>
+        <div class="grid-3">
+          <label class="f"><span>Envío de la agencia (USD)</span>
+            <input type="number" id="inEnvio" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+          </label>
+          <label class="f"><span>Pago a la mensajera (USD)</span>
+            <input type="number" id="inMensajera" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+            <span class="field-note" style="text-transform:none; letter-spacing:0; font-weight:400;">Por su tiempo: comprar y organizar el envío.</span>
+          </label>
+          <label class="f"><span>Otros gastos (USD)</span>
+            <input type="number" id="inOtros" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Resultado -->
+      <div class="verdict idle" id="verdict" role="status">
+        <p class="v-label">Ganancia si revendes todo</p>
+        <p class="v-big" id="vBig">Completa los datos</p>
+        <p class="v-sub" id="vSub">Agrega al menos un producto con su costo y su precio de venta.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <p class="s-label">Costo total del encargo</p>
+          <p class="s-value mono" id="stCostoUsd">$0.00</p>
+        </div>
+        <div class="stat">
+          <p class="s-label">Si revendes todo, entra</p>
+          <p class="s-value mono" id="stIngresoUsd">$0.00</p>
+        </div>
+        <div class="stat">
+          <p class="s-label">Para no perder, vende por</p>
+          <p class="s-value mono" id="stMinUsd">$0.00</p>
+          <p class="s-alt" id="stMinUnidad">— por unidad</p>
+        </div>
+      </div>
+
+      <section class="card" aria-labelledby="h-donde">
+        <h2 id="h-donde">¿A dónde se va el dinero?</h2>
+        <p class="card-sub">El reparto del costo total del encargo.</p>
+        <div class="bar-row">
+          <div class="b-top"><span class="b-name">Mercancía (las compras)</span><span class="mono" id="barMercVal">$0.00 · 0%</span></div>
+          <div class="bar-track"><div class="bar-fill fill-merc" id="barMerc"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="b-top"><span class="b-name">Envío de la agencia</span><span class="mono" id="barEnvVal">$0.00 · 0%</span></div>
+          <div class="bar-track"><div class="bar-fill fill-env" id="barEnv"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="b-top"><span class="b-name">Pago a la mensajera</span><span class="mono" id="barMenVal">$0.00 · 0%</span></div>
+          <div class="bar-track"><div class="bar-fill fill-men" id="barMen"></div></div>
+        </div>
+        <div class="bar-row" id="rowOtrosBar">
+          <div class="b-top"><span class="b-name">Otros gastos</span><span class="mono" id="barOtrVal">$0.00 · 0%</span></div>
+          <div class="bar-track"><div class="bar-fill fill-otr" id="barOtr"></div></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-detalle">
+        <h2 id="h-detalle">Detalle por producto</h2>
+        <p class="card-sub">El envío, el pago a la mensajera y los demás gastos se reparten entre los productos según lo que cuesta cada uno. Así sabes el costo real de cada pieza y a partir de qué precio ya ganas.</p>
+        <div id="detalleWrap">
+          <p class="hint" id="detalleVacio">Todavía no hay productos con datos.</p>
+          <table class="break" id="tablaDetalle" style="display:none;">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="num">Costo real c/u</th>
+                <th class="num">Venta c/u</th>
+                <th class="num">Ganancia c/u</th>
+                <th class="num">Ganancia total</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDetalle"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btnCopy" type="button">Copiar resumen</button>
+        <button class="btn btn-ghost" id="btnReset" type="button">Limpiar todo</button>
+      </div>
+      <p class="copy-msg" id="copyMsg" role="status"></p>
+      <div id="resumenBox">
+        <textarea id="resumenText" readonly aria-label="Resumen del encargo"></textarea>
+      </div>
+
+      <footer>
+        <p>El costo real de cada producto incluye su parte del envío, del pago a la mensajera y de los demás gastos: por eso es mayor que el precio de compra.</p>
+        <p>La ganancia supone que revendes <strong>todo</strong> el encargo. Lo que no se venda, no entra.</p>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var prodList = document.getElementById("prodList");
+
+        var fmtUSD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+        function num(v) {
+          var n = parseFloat(String(v).replace(",", "."));
+          return isFinite(n) && n > 0 ? n : 0;
+        }
+
+        /* ---------- Filas de productos ---------- */
+        function crearFila() {
+          var row = document.createElement("div");
+          row.className = "prod-row";
+          row.innerHTML =
+            '<label class="f f-name"><span class="mobile-only">Producto</span>' +
+              '<input type="text" class="p-nombre" placeholder="Ej.: Perfume" autocomplete="off" /></label>' +
+            '<label class="f"><span class="mobile-only">Cant.</span>' +
+              '<input type="number" class="p-cant" min="0" step="1" inputmode="numeric" placeholder="1" /></label>' +
+            '<label class="f"><span class="mobile-only">Costo c/u (USD)</span>' +
+              '<input type="number" class="p-costo" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></label>' +
+            '<label class="f f-venta"><span class="mobile-only p-venta-label">Venta c/u (USD)</span>' +
+              '<input type="number" class="p-venta" min="0" step="0.01" inputmode="decimal" placeholder="0" /></label>' +
+            '<button type="button" class="btn-remove" aria-label="Quitar este producto">&times;</button>' +
+            '<p class="prod-total mono"></p>';
+          row.querySelector(".btn-remove").addEventListener("click", function () {
+            row.remove();
+            if (!prodList.children.length) prodList.appendChild(crearFila());
+            recalcular();
+          });
+          var inputs = row.querySelectorAll("input");
+          for (var i = 0; i < inputs.length; i++) inputs[i].addEventListener("input", recalcular);
+          return row;
+        }
+
+        function leerProductos() {
+          var items = [];
+          var rows = prodList.children;
+          for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            var nombre = r.querySelector(".p-nombre").value.trim();
+            var cant = num(r.querySelector(".p-cant").value);
+            var costo = num(r.querySelector(".p-costo").value);
+            var venta = num(r.querySelector(".p-venta").value);
+            items.push({ row: r, nombre: nombre, cant: cant, costo: costo, venta: venta });
+          }
+          return items;
+        }
+
+        /* ---------- Cálculo ---------- */
+        function recalcular() {
+          var envio = num(document.getElementById("inEnvio").value);
+          var mensajera = num(document.getElementById("inMensajera").value);
+          var otros = num(document.getElementById("inOtros").value);
+          var items = leerProductos();
+
+          var costoMercancia = 0, unidades = 0, ingresoUSD = 0;
+          items.forEach(function (it) {
+            costoMercancia += it.cant * it.costo;
+            unidades += it.cant;
+            ingresoUSD += it.cant * it.venta;
+            var tot = it.row.querySelector(".prod-total");
+            if (it.cant > 0 && it.costo > 0) {
+              tot.innerHTML = "Compra: <b>" + fmtUSD.format(it.cant * it.costo) + "</b> en total";
+            } else { tot.textContent = ""; }
+          });
+
+          var gastosExtra = envio + mensajera + otros;
+          var costoTotalUSD = costoMercancia + gastosExtra;
+
+          var gananciaUSD = ingresoUSD - costoTotalUSD;
+          var hayDatos = costoTotalUSD > 0 || ingresoUSD > 0;
+
+          /* Veredicto */
+          var verdict = document.getElementById("verdict");
+          var vBig = document.getElementById("vBig");
+          var vSub = document.getElementById("vSub");
+          verdict.className = "verdict " + (!hayDatos ? "idle" : gananciaUSD > 0.004 ? "good" : gananciaUSD < -0.004 ? "bad" : "idle");
+          if (!hayDatos) {
+            vBig.textContent = "Completa los datos";
+            vSub.textContent = "Agrega al menos un producto con su costo y su precio de venta.";
+          } else if (gananciaUSD > 0.004) {
+            var margen = costoTotalUSD > 0 ? (gananciaUSD / costoTotalUSD) * 100 : 0;
+            vBig.textContent = "Te queda " + fmtUSD.format(gananciaUSD);
+            vSub.textContent = "Es tu ganancia si revendes todo: un " + margen.toFixed(0) + "% por encima de lo que pusiste.";
+          } else if (gananciaUSD < -0.004) {
+            vBig.textContent = "Pierdes " + fmtUSD.format(Math.abs(gananciaUSD));
+            vSub.textContent = "Quedas por debajo del costo. Sube el precio de venta o baja los gastos.";
+          } else {
+            vBig.textContent = "Sales tablas";
+            vSub.textContent = "Revendiendo todo recuperas justo lo que pusiste, sin ganar nada.";
+          }
+
+          /* Tarjetas */
+          document.getElementById("stCostoUsd").textContent = fmtUSD.format(costoTotalUSD);
+          document.getElementById("stIngresoUsd").textContent = fmtUSD.format(ingresoUSD);
+          document.getElementById("stMinUsd").textContent = fmtUSD.format(costoTotalUSD);
+          document.getElementById("stMinUnidad").textContent = unidades > 0
+            ? fmtUSD.format(costoTotalUSD / unidades) + " por unidad (" + unidades + " en total)"
+            : "— por unidad";
+
+          /* Barras */
+          function barra(idBar, idVal, valor) {
+            var pct = costoTotalUSD > 0 ? (valor / costoTotalUSD) * 100 : 0;
+            document.getElementById(idBar).style.width = pct.toFixed(1) + "%";
+            document.getElementById(idVal).textContent = fmtUSD.format(valor) + " · " + pct.toFixed(0) + "%";
+          }
+          barra("barMerc", "barMercVal", costoMercancia);
+          barra("barEnv", "barEnvVal", envio);
+          barra("barMen", "barMenVal", mensajera);
+          barra("barOtr", "barOtrVal", otros);
+
+          /* Detalle por producto: reparte envío + mensajera + otros según el valor de compra */
+          var tbody = document.getElementById("tbodyDetalle");
+          var tabla = document.getElementById("tablaDetalle");
+          var vacio = document.getElementById("detalleVacio");
+          tbody.innerHTML = "";
+          var conDatos = items.filter(function (it) { return it.cant > 0 && (it.costo > 0 || it.venta > 0); });
+          if (!conDatos.length) {
+            tabla.style.display = "none";
+            vacio.style.display = "";
+          } else {
+            tabla.style.display = "";
+            vacio.style.display = "none";
+            conDatos.forEach(function (it, idx) {
+              var parte = costoMercancia > 0 ? (it.cant * it.costo / costoMercancia) * gastosExtra : (unidades > 0 ? gastosExtra / conDatos.length : 0);
+              var costoRealUnitUSD = it.cant > 0 ? (it.cant * it.costo + parte) / it.cant : 0;
+              var ventaUnitUSD = it.venta;
+              var ganUnitUSD = ventaUnitUSD - costoRealUnitUSD;
+              var ganTotUSD = ganUnitUSD * it.cant;
+              var nombreTxt = it.nombre || ("Producto " + (idx + 1));
+              function celda(txt, clase) {
+                return '<td class="num ' + (clase || "") + '">' + txt + "</td>";
+              }
+              var tr = document.createElement("tr");
+              tr.innerHTML =
+                '<td class="td-name">' + nombreTxt.replace(/</g, "&lt;") + ' <span style="color:var(--ink-soft); font-weight:400;">× ' + it.cant + "</span></td>" +
+                celdaCon("Costo real c/u", fmtUSD.format(costoRealUnitUSD)) +
+                celdaCon("Venta c/u", fmtUSD.format(ventaUnitUSD)) +
+                celdaCon("Ganancia c/u", (ganUnitUSD >= 0 ? "+" : "−") + fmtUSD.format(Math.abs(ganUnitUSD)).slice(0), ganUnitUSD >= 0 ? "pos" : "neg") +
+                celdaCon("Ganancia total", (ganTotUSD >= 0 ? "+" : "−") + fmtUSD.format(Math.abs(ganTotUSD)), ganTotUSD >= 0 ? "pos" : "neg");
+              tbody.appendChild(tr);
+              function celdaCon(th, txt, clase) {
+                return '<td class="num ' + (clase || "") + '" data-th="' + th + '">' + txt + "</td>";
+              }
+            });
+          }
+
+          return {
+            envio: envio, mensajera: mensajera, otros: otros,
+            costoMercancia: costoMercancia, costoTotalUSD: costoTotalUSD,
+            ingresoUSD: ingresoUSD,
+            gananciaUSD: gananciaUSD,
+            unidades: unidades, items: items, hayDatos: hayDatos
+          };
+        }
+
+        /* ---------- Acciones ---------- */
+        document.getElementById("btnAdd").addEventListener("click", function () {
+          var fila = crearFila();
+          prodList.appendChild(fila);
+          fila.querySelector(".p-nombre").focus();
+          recalcular();
+        });
+        ["inEnvio", "inMensajera", "inOtros"].forEach(function (id) {
+          document.getElementById(id).addEventListener("input", recalcular);
+        });
+
+        document.getElementById("btnReset").addEventListener("click", function () {
+          prodList.innerHTML = "";
+          prodList.appendChild(crearFila());
+          ["inEnvio", "inMensajera", "inOtros"].forEach(function (id) { document.getElementById(id).value = ""; });
+          document.getElementById("copyMsg").textContent = "";
+          document.getElementById("resumenBox").style.display = "none";
+          recalcular();
+        });
+
+        document.getElementById("btnCopy").addEventListener("click", function () {
+          var r = recalcular();
+          var lineas = [];
+          lineas.push("RESUMEN DEL ENCARGO");
+          lineas.push("-------------------");
+          r.items.forEach(function (it) {
+            if (it.cant > 0 && (it.costo > 0 || it.venta > 0)) {
+              lineas.push("• " + (it.nombre || "Producto") + " × " + it.cant +
+                " — compra " + fmtUSD.format(it.costo) + " c/u, venta " +
+                fmtUSD.format(it.venta) + " c/u");
+            }
+          });
+          lineas.push("");
+          lineas.push("Mercancía: " + fmtUSD.format(r.costoMercancia));
+          lineas.push("Envío de la agencia: " + fmtUSD.format(r.envio));
+          lineas.push("Pago a la mensajera: " + fmtUSD.format(r.mensajera));
+          if (r.otros > 0) lineas.push("Otros gastos: " + fmtUSD.format(r.otros));
+          lineas.push("COSTO TOTAL: " + fmtUSD.format(r.costoTotalUSD));
+          lineas.push("Si revendo todo: " + fmtUSD.format(r.ingresoUSD));
+          if (r.gananciaUSD >= 0) {
+            lineas.push("GANANCIA: " + fmtUSD.format(r.gananciaUSD));
+          } else {
+            lineas.push("PÉRDIDA: " + fmtUSD.format(Math.abs(r.gananciaUSD)));
+          }
+          var texto = lineas.join("\n");
+          var msg = document.getElementById("copyMsg");
+          function mostrarCaja() {
+            var box = document.getElementById("resumenBox");
+            box.style.display = "block";
+            document.getElementById("resumenText").value = texto;
+            msg.textContent = "Cópialo desde el recuadro de abajo.";
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(texto).then(function () {
+              msg.textContent = "Resumen copiado. Pégalo donde quieras.";
+            }, mostrarCaja);
+          } else { mostrarCaja(); }
+        });
+
+        /* ---------- Arranque ---------- */
+        prodList.appendChild(crearFila());
+        recalcular();
+      })();
+    </script>
+  </body>
+</html>
